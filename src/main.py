@@ -15,4 +15,9 @@ app.include_router(like.router)
 app.include_router(accounts.router)
 app.include_router(blog.router)
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
+
+@app.on_event("startup")
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

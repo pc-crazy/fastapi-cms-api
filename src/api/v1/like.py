@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from src.database import get_db
 from src.models import User, Post, Like
 from src.auth import get_current_user
@@ -10,11 +11,12 @@ router = APIRouter(prefix="/v1")
 # Like Endpoints
 @router.post("/like/{post_id}")
 async def like_post(
-        post_id: int, db: Session = Depends(get_db),
+        post_id: int, db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     # Validate post_id exists
-    post = db.query(Post).filter(Post.id == post_id).first()
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
@@ -25,36 +27,38 @@ async def like_post(
             detail="You cannot like a private post you don't own"
         )
 
-    like_exist = db.query(Like).filter(
-        Like.post_id == post_id, Like.user_id == current_user.id
-    ).first()
+    result = await db.execute(
+        select(Like).where(Like.post_id == post_id, Like.user_id == current_user.id)
+    )
+    like_exist = result.scalars().first()
     if like_exist:
         raise HTTPException(
             status_code=400, detail="You have already liked this post."
         )
     like = Like(post_id=post_id, user_id=current_user.id)
-
     db.add(like)
-    db.commit()
+    await db.commit()
     return {"message": "Post liked"}
 
 
 @router.delete("/like/{post_id}")
 async def unlike_post(
         post_id: int,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     # Validate post_id exists
-    post = db.query(Post).filter(Post.id == post_id).first()
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    like = db.query(Like).filter(
-        Like.post_id == post_id, Like.user_id == current_user.id
-    ).first()
+    result = await db.execute(
+        select(Like).where(Like.post_id == post_id, Like.user_id == current_user.id)
+    )
+    like = result.scalars().first()
     if like:
-        db.delete(like)
-        db.commit()
+        await db.delete(like)
+        await db.commit()
         return {"message": "Post unliked"}
     raise HTTPException(status_code=400, detail="You have not liked this post")

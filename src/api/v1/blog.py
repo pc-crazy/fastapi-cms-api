@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_
 
 from src.auth import get_current_user
 from src.database import get_db
@@ -13,34 +14,34 @@ router = APIRouter(prefix="/v1")
 @router.post("/blog", response_model=PostResponse)
 async def create_blog(
         post: PostCreate,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     new_post = Post(**post.dict(), owner_id=current_user.id)
     db.add(new_post)
-    db.commit()
-    db.refresh(new_post)
+    await db.commit()
+    await db.refresh(new_post)
     return new_post
 
 
 @router.get("/blog", response_model=list[PostResponse])
 async def get_all_blogs(
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    posts = db.query(Post).filter(
-        Post.is_public | (Post.owner_id == current_user.id)
-    ).all()
-    return posts
+    stmt = select(Post).where(or_(Post.is_public, Post.owner_id == current_user.id))
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 
 @router.get("/blog/{post_id}", response_model=PostResponse)
 async def get_blog(
         post_id: int,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if not post.is_public and post.owner_id != current_user.id:
@@ -52,28 +53,30 @@ async def get_blog(
 async def update_blog(
         post_id: int,
         post_data: PostCreate,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
     if not post or post.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     for attr, value in post_data.dict().items():
         setattr(post, attr, value)
-    db.commit()
-    db.refresh(post)
+    await db.commit()
+    await db.refresh(post)
     return post
 
 
 @router.delete("/blog/{post_id}")
 async def delete_blog(
         post_id: int,
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+    result = await db.execute(select(Post).where(Post.id == post_id))
+    post = result.scalars().first()
     if not post or post.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    db.delete(post)
-    db.commit()
+    await db.delete(post)
+    await db.commit()
     return {"message": "Post deleted"}
