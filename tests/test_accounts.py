@@ -1,6 +1,6 @@
 # tests/test_accounts.py
 def test_create_account(client):
-    response = client.post("/accounts", json={
+    response = client.post("/v1/accounts", json={
         "name": "Test User",
         "email": "test@example.com",
         "password": "testpass123"
@@ -10,13 +10,13 @@ def test_create_account(client):
 
 def test_login_account(client):
     # First create the account
-    client.post("/accounts", json={
+    client.post("/v1/accounts", json={
         "name": "Login User",
         "email": "login@example.com",
         "password": "loginpass"
     })
     # Now login
-    response = client.post("/accounts/login", data={
+    response = client.post("/v1/accounts/login", data={
         "username": "login@example.com",
         "password": "loginpass",
         "grant_type": "password"
@@ -26,34 +26,34 @@ def test_login_account(client):
 
 def test_get_me(client):
     # Create and login
-    client.post("/accounts", json={
+    client.post("/v1/accounts", json={
         "name": "Me User",
         "email": "me@example.com",
         "password": "mypass"
     })
-    login_res = client.post("/accounts/login", data={
+    login_res = client.post("/v1/accounts/login", data={
         "username": "me@example.com",
         "password": "mypass",
         "grant_type": "password"
     })
     token = login_res.json()["access_token"]
     # Access /me with token
-    me_res = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+    me_res = client.get("/v1/me", headers={"Authorization": f"Bearer {token}"})
     assert me_res.status_code == 200
     assert me_res.json()["email"] == "me@example.com"
 
 def test_invalid_token(client):
-    res = client.get("/me", headers={"Authorization": "Bearer invalid.token.here"})
+    res = client.get("/v1/me", headers={"Authorization": "Bearer invalid.token.here"})
     assert res.status_code == 401
 
 def register_and_login(client, email="extra@example.com", password="pass123"):
-    client.post("/accounts", json={"name": "Extra", "email": email, "password": password})
-    res = client.post("/accounts/login", data={"username": email, "password": password, "grant_type": "password"})
+    client.post("/v1/accounts", json={"name": "Extra", "email": email, "password": password})
+    res = client.post("/v1/accounts/login", data={"username": email, "password": password, "grant_type": "password"})
     return res.json()["access_token"]
 
 def test_account_update(client):
     token = register_and_login(client, "update@example.com")
-    res = client.put("/accounts", json={
+    res = client.put("/v1/accounts", json={
         "name": "Updated Name",
         "email": "update@example.com",
         "password": "newpass123"
@@ -63,6 +63,6 @@ def test_account_update(client):
 
 def test_account_delete(client):
     token = register_and_login(client, "delete@example.com")
-    res = client.delete("/accounts", headers={"Authorization": f"Bearer {token}"})
+    res = client.delete("/v1/accounts", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 200
     assert res.json()["message"] == "Account deleted successfully"

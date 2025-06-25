@@ -1,6 +1,6 @@
 # tests/test_database.py
 
-from app.database import get_db
+from src.database import get_db
 
 def test_get_db_lifecycle():
     db_gen = get_db()
