@@ -1,7 +1,11 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateTime, func
+from sqlalchemy import (
+    Column, Integer, String, Text, ForeignKey, Boolean,
+    DateTime, func
+)
 from sqlalchemy.orm import relationship
 from src.database import Base
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -13,6 +17,7 @@ class User(Base):
 
     posts = relationship("Post", back_populates="owner")
     likes = relationship("Like", back_populates="user")
+
 
 class Post(Base):
     __tablename__ = 'posts'
@@ -27,6 +32,7 @@ class Post(Base):
 
     owner = relationship("User", back_populates="posts")
     likes = relationship("Like", back_populates="post")
+
 
 class Like(Base):
     __tablename__ = 'likes'
