@@ -32,8 +32,8 @@ This project is a lightweight content management system (CMS) API built using **
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/your-username/fastapi-cms-demo.git
-cd fastapi-cms-demo
+git clone https://github.com/pc-crazy/fastapi-cms-api.git
+cd fastapi-cms-api
 ```
 
 ### 2️⃣ Create & Activate Virtual Environment
