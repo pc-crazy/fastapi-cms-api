@@ -1,4 +1,3 @@
-
 # CMS API with FastAPI
 
 This project is a lightweight content management system (CMS) API built using **FastAPI**, supporting user authentication, blog creation, and like/unlike functionality.
@@ -12,7 +11,7 @@ This project is a lightweight content management system (CMS) API built using **
 - **Blog Post API**: Create, retrieve, update, delete blog posts with visibility controls (public/private).
 - **Like System**: Users can like/unlike public or their own blog posts.
 - **Access Control**: Only post owners can edit/delete their posts. Private posts are only viewable by their owners.
-- **SQLAlchemy (2.0 style)**  for object relation mapping.
+- **SQLAlchemy (2.0 style)** for efficient object relation mapping.
 - **100% Test Coverage** using `pytest`.
 - **API Versioning**: Clean `/v1/...` structured endpoints.
 
@@ -100,6 +99,20 @@ tests/
     ├── test_main_extra.py
     └── conftest.py
 ```
+
+---
+
+## 📫 Postman Collection
+
+A ready-to-use Postman collection is provided to test all API endpoints:
+
+📥 [Download CMS API Postman Collection](cms-api.postman_collection.json)
+
+📥 [Download CMS API Postman Environment](cms-api.postman_environment.json)
+
+> ✅ The **Login** request includes a test script that automatically sets the `access_token` in the Postman environment upon successful login.
+>
+> 📌 Import both files into Postman. Use the environment to set `base_url` and `access_token` for authenticated requests.
 
 ---
 
