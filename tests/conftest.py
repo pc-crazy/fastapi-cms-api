@@ -1,39 +1,35 @@
 # tests/conftest.py
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+import pytest_asyncio
+from httpx import AsyncClient
+from httpx._transports.asgi import ASGITransport
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database import Base, get_db
 from src.main import app
 
-# Use a separate SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Async SQLite test database
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+engine_test = create_async_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(bind=engine_test, class_=AsyncSession, expire_on_commit=False)
 
-@pytest.fixture(scope="session")
-def db_engine():
-    Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    return engine
+# Override get_db dependency
+async def override_get_db():
+    async with TestingSessionLocal() as session:
+        yield session
 
-@pytest.fixture(scope="function")
-def db(db_engine):
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
+# ✅ Marked as pytest_asyncio fixture and autouse
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def prepare_database():
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
-@pytest.fixture(scope="function")
-def client(db):
-    def override_get_db():
-        yield db
+@pytest_asyncio.fixture(scope="function")
+async def client():
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    transport = ASGITransport(app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
     app.dependency_overrides.clear()
