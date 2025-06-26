@@ -96,7 +96,7 @@ tests/
     ├── test_blog.py
     ├── test_like.py
     ├── test_auth.py
-    ├── test_main_extra.py
+    ├── test_database.py
     └── conftest.py
 ```
 
