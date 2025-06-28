@@ -17,7 +17,7 @@ DB_NAME = os.getenv("DB_NAME")
 SQLALCHEMY_DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
-SQLALCHEMY_DATABASE_URL = "sqlite:///./cms.db"
+# SQLALCHEMY_DATABASE_URL = "sqlite:///./cms.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

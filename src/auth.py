@@ -31,8 +31,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
-    expires_delta = expires_delta if expires_delta else timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    expires_delta = (
+        expires_delta
+        if expires_delta
+        else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
@@ -41,7 +43,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
 
 
 def get_current_user(
-        token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

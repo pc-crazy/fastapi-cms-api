@@ -3,7 +3,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from src.auth import (
-    get_current_user, create_access_token, verify_password, get_password_hash
+    get_current_user,
+    create_access_token,
+    verify_password,
+    get_password_hash,
 )
 from src.database import get_db
 from src.models import User
@@ -28,8 +31,8 @@ async def create_account(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/accounts/login")
 async def login(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password):
@@ -39,8 +42,11 @@ async def login(
 
 
 @router.put("/accounts", response_model=UserResponse)
-async def update_account(updated: UserCreate, db: Session = Depends(get_db),
-                         current_user: User = Depends(get_current_user)):
+async def update_account(
+    updated: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     current_user.name = updated.name
     current_user.email = updated.email
     current_user.password = get_password_hash(updated.password)
@@ -51,8 +57,8 @@ async def update_account(updated: UserCreate, db: Session = Depends(get_db),
 
 @router.delete("/accounts")
 async def delete_account(
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     db.delete(current_user)
     db.commit()

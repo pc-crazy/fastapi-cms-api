@@ -25,6 +25,8 @@ class PostBase(BaseModel):
     description: Optional[str] = None
     content: str
     is_public: bool = True
+    category_id: int
+    sub_category_id: int
 
 
 class PostCreate(PostBase):
@@ -38,3 +40,8 @@ class PostResponse(PostBase):
 
     class Config:
         orm_mode = True
+
+
+class PostGetResponse(PostResponse):
+    category_name: Optional[str] = None
+    sub_category_name: Optional[str] = None
